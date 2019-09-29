@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+</head>
+
+
+<body>
+    <div>
+        <svg id="statesvg"></svg>
+    </div>
+    <script>
+        // 生成路径生成器
+        function generatePath(scale) {
+            let self = this;
+            var projection = self.generateProjection(scale);
+            return d3.geoPath().projection(projection);
+        };
+        // 生成投影
+        function generateProjection(scale) {
+            var svg = d3.select("svg"),
+                width = svg.attr("width"),
+                height = svg.attr("height");
+            return d3.geoMercator()
+                .center([105, 31])
+                .scale(scale)
+                .translate([width / 2, height / 2 + height / 6])
+        }
+        function initChinaMap() {
+            let self = this;
+            var path = self.generatePath(950);
+            var pathCubier = self.generatePath(958);
+            var color = function (i) {
+                return d3.color('#02005A');
+            };
+            var svg = d3.select("svg");
+            d3.json("./map.json", function (error, root) {
+                console.log(root)
+                if (error)
+                    return console.error(error);
+                //画阴影背景
+                svg.append("g")
+                    .attr("filter", "url(#f1)")
+                    .attr("fill", "rgba(45,107,253,1)")
+                    .attr('style', 'border: 1px solid #fff;')
+                    .selectAll("path")
+                    .data(topojson.feature(root, root.objects.china).features)
+                    .enter()
+                    .append("path")
+                    .attr("stroke", "rgba(45,107,253,1)")
+                    .attr("stroke-width", 1)
+                    .attr("fill", "rgba(45,107,253,1)")
+                    .attr("d", pathCubier)
+                    .select('circle')
+                    .data(topojson.feature(root, root.objects.china).features)
+                    .enter()
+                    .append("circle")
+                    .attr('cx', '0')
+                    .attr('cy', '0')
+                    .attr('r', 500)
+                    .attr('fill', 'transparent')
+                //画立体层级感
+                svg.append("g")
+                    .attr("fill", "#59acc8")
+                    .selectAll("path")
+                    .data(topojson.feature(root, root.objects.china).features)
+                    .enter()
+                    .append("path")
+                    .attr("stroke", "#59acc8")
+                    .attr("stroke-width", 1)
+                    .attr("fill", "#59acc8")
+                    .attr("d", pathCubier)
+                //画中国地图
+                svg.append("g")
+                    .attr("fill", "#02005A")
+                    .selectAll("path")
+                    .data(topojson.feature(root, root.objects.china).features)
+                    .enter()
+                    .append("path")
+                    .attr("stroke", "#1C98C8")
+                    .attr("stroke-width", 1)
+                    .attr("fill", function (d, i) {
+                        return color(i);
+                    })
+                    .attr("d", path)
+                    .append("title")
+                    .text(function (d) {
+                        // console.log("d", d)
+                        return d.properties.name;
+                    })
+            });
+        }
+        window.onload = initChinaMap();
+    </script>
+</body>
+
+</html>
